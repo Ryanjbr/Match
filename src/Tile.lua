@@ -26,6 +26,8 @@ function Tile:init(x, y, color, variety)
     -- tile appearance/points
     self.color = color
     self.variety = variety
+    -- special tile that deletes whole row
+    self.special = false
 end
 
 function Tile:render(x, y)
