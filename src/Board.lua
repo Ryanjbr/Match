@@ -37,6 +37,7 @@ function Board:initializeTiles()
             end
             -- create a new tile at X,Y with a random color and variety
             table.insert(self.tiles[tileY], Tile(tileX, tileY, math.random(18), math.random(1, self.level % 6), special))
+            special = false
         end
     end
 
@@ -263,6 +264,12 @@ function Board:render()
     for y = 1, #self.tiles do
         for x = 1, #self.tiles[1] do
             self.tiles[y][x]:render(self.x, self.y)
+        end
+    end
+
+    for y = 1, #self.tiles do
+        for x = 1, #self.tiles[1] do
+            self.tiles[y][x]:renderParticles(self.x + 16, self.y + 16)
         end
     end
 end

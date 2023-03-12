@@ -41,4 +41,15 @@ function Tile:render(x, y)
     love.graphics.setColor(255, 255, 255, 255)
     love.graphics.draw(gTextures['main'], gFrames['tiles'][self.color][self.variety],
         self.x + x, self.y + y)
+
 end
+
+-- ensures that particles render last
+
+function Tile:renderParticles(x, y)
+    if self.special then
+        love.graphics.draw(pSystem,self.x + x, self.y + y)
+        pSystem:emit(24)
+    end
+end
+

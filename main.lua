@@ -78,6 +78,16 @@ function love.load()
 
     -- initialize input table
     love.keyboard.keysPressed = {}
+
+    -- set up particle system
+    pSystem = love.graphics.newParticleSystem(gTextures['particle'], 24)
+    pSystem:setParticleLifetime(0,0.5)
+    pSystem:setLinearAcceleration(-6,-6,6,6)
+    pSystem:setEmissionArea('uniform', 14,14)
+    pSystem:setColors(1,1,1,0.25,1,1,1,0.75)
+    pSystem:setRotation(10,20)
+    pSystem:setSpin(20,50)
+
 end
 
 function love.resize(w, h)
@@ -109,6 +119,8 @@ function love.update(dt)
     end
 
     gStateMachine:update(dt)
+
+    pSystem:update(dt)
 
     love.keyboard.keysPressed = {}
 end
