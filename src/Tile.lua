@@ -13,7 +13,7 @@
 
 Tile = Class{}
 
-function Tile:init(x, y, color, variety)
+function Tile:init(x, y, color, variety, special)
     
     -- board positions
     self.gridX = x
@@ -27,7 +27,7 @@ function Tile:init(x, y, color, variety)
     self.color = color
     self.variety = variety
     -- special tile that deletes whole row
-    self.special = false
+    self.special = special
 end
 
 function Tile:render(x, y)

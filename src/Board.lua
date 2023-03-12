@@ -24,6 +24,7 @@ end
 
 function Board:initializeTiles()
     self.tiles = {}
+    local special = false
 
     for tileY = 1, 8 do
         
@@ -31,9 +32,11 @@ function Board:initializeTiles()
         table.insert(self.tiles, {})
 
         for tileX = 1, 8 do
-            
+            if math.random(100) == 1 then
+                special = true
+            end
             -- create a new tile at X,Y with a random color and variety
-            table.insert(self.tiles[tileY], Tile(tileX, tileY, math.random(18), math.random(1, self.level % 6)))
+            table.insert(self.tiles[tileY], Tile(tileX, tileY, math.random(18), math.random(1, self.level % 6), special))
         end
     end
 
