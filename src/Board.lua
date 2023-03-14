@@ -32,7 +32,7 @@ function Board:initializeTiles()
         table.insert(self.tiles, {})
 
         for tileX = 1, 8 do
-            if math.random(100) == 1 then
+            if math.random(10) == 1 then
                 special = true
             end
             -- create a new tile at X,Y with a random color and variety
@@ -60,6 +60,8 @@ function Board:calculateMatches()
     -- how many of the same color blocks in a row we've found
     local matchNum = 1
 
+    isMatchSpecial = false
+
     -- horizontal matches first
     for y = 1, 8 do
         local colorToMatch = self.tiles[y][1].color
@@ -86,21 +88,23 @@ function Board:calculateMatches()
                         
                         -- add each tile to the match that's in that match
                         table.insert(match, self.tiles[y][x2])
+                        if self.tiles[y][x2].special then
+                            isMatchSpecial = true
+                        end
                     end
 
                     -- add this match to our total matches table
+                    if isMatchSpecial then
+                        local yValue = match[1].gridY
+                        for i=1,8 do
+                            table.insert(match, self.tiles[yValue][i])
+                        end
+                        isMatchSpecial = false
+                    end
                     table.insert(matches, match)
-                end
-
-                matchNum = 1
-
-                -- don't need to check last two if they won't be in a match
-                if x >= 7 then
-                    break
                 end
             end
         end
-
         -- account for the last row ending with a match
         if matchNum >= 3 then
             local match = {}
@@ -108,8 +112,18 @@ function Board:calculateMatches()
             -- go backwards from end of last row by matchNum
             for x = 8, 8 - matchNum + 1, -1 do
                 table.insert(match, self.tiles[y][x])
+                if self.tiles[y][x].special then
+                    isMatchSpecial = true
+                end
             end
 
+            if isMatchSpecial then
+                local yValue = match[1].gridY
+                for i=1,8 do
+                    table.insert(match, self.tiles[yValue][i])
+                end
+                isMatchSpecial = false
+            end
             table.insert(matches, match)
         end
     end
@@ -132,8 +146,18 @@ function Board:calculateMatches()
 
                     for y2 = y - 1, y - matchNum, -1 do
                         table.insert(match, self.tiles[y2][x])
+                        if self.tiles[y2][x].special then
+                            isMatchSpecial = true
+                        end
                     end
 
+                    if isMatchSpecial then
+                        local xValue = match[1].gridX
+                        for i=1,8 do
+                            table.insert(match, self.tiles[i][xValue])
+                        end
+                        isMatchSpecial = false
+                    end
                     table.insert(matches, match)
                 end
 
@@ -152,9 +176,19 @@ function Board:calculateMatches()
             
             -- go backwards from end of last row by matchNum
             for y = 8, 8 - matchNum + 1, -1 do
+                if self.tiles[y][x].special then
+                    isMatchSpecial = true
+                end
                 table.insert(match, self.tiles[y][x])
             end
 
+            if isMatchSpecial then
+                local xValue = match[1].gridX
+                for i=1,8 do
+                    table.insert(match, self.tiles[i][xValue])
+                end
+                isMatchSpecial = false
+            end
             table.insert(matches, match)
         end
     end
@@ -176,7 +210,6 @@ function Board:removeMatches()
             self.tiles[tile.gridY][tile.gridX] = nil
         end
     end
-
     self.matches = nil
 end
 
