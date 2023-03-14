@@ -32,7 +32,7 @@ function Board:initializeTiles()
         table.insert(self.tiles, {})
 
         for tileX = 1, 8 do
-            if math.random(10) == 1 then
+            if math.random(100) == 1 then
                 special = true
             end
             -- create a new tile at X,Y with a random color and variety
