@@ -78,6 +78,7 @@ function love.load()
 
     -- initialize input table
     love.keyboard.keysPressed = {}
+    love.mouse.buttonsPressed = {}
 
     -- set up particle system
     pSystem = love.graphics.newParticleSystem(gTextures['particle'], 24)
@@ -108,6 +109,19 @@ function love.keyboard.wasPressed(key)
     end
 end
 
+function love.mousepressed(x,y,button)
+
+    love.mouse.buttonsPressed[button] = true
+
+end
+
+function love.mouse.wasPressed(button)
+    if love.mouse.buttonsPressed[button] then
+        return true
+    else
+        return false
+    end
+end
 function love.update(dt)
     
     -- scroll background, used across all states
@@ -123,6 +137,7 @@ function love.update(dt)
     pSystem:update(dt)
 
     love.keyboard.keysPressed = {}
+    love.mouse.buttonsPressed = {}
 end
 
 function love.draw()

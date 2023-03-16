@@ -106,6 +106,16 @@ function PlayState:update(dt)
     end
 
     if self.canInput then
+
+        local mouseX,mouseY = push:toGame(love.mouse.getX(),love.mouse.getY())
+        for k,row in pairs(self.board.tiles) do
+            for k,tile in pairs(row) do
+                if mouseX > tile.x + self.board.x and mouseX < tile.x + self.board.x +32 and mouseY > tile.y + self.board.y and mouseY < tile.y + self.board.y + 32 then
+                    self.boardHighlightX = tile.gridX - 1
+                    self.boardHighlightY = tile.gridY - 1
+                end
+            end
+        end
         -- move cursor around based on bounds of grid, playing sounds
         if love.keyboard.wasPressed('up') then
             self.boardHighlightY = math.max(0, self.boardHighlightY - 1)
@@ -122,8 +132,7 @@ function PlayState:update(dt)
         end
 
         -- if we've pressed enter, to select or deselect a tile...
-        if love.keyboard.wasPressed('enter') or love.keyboard.wasPressed('return') then
-            
+        if love.keyboard.wasPressed('enter') or love.keyboard.wasPressed('return') or love.mouse.wasPressed(1) then
             -- if same tile as currently highlighted, deselect
             local x = self.boardHighlightX + 1
             local y = self.boardHighlightY + 1
@@ -142,7 +151,6 @@ function PlayState:update(dt)
                 gSounds['error']:play()
                 self.highlightedTile = nil
             else
-                
                 -- swap grid positions of tiles
                 local tempX = self.highlightedTile.gridX
                 local tempY = self.highlightedTile.gridY
@@ -160,6 +168,10 @@ function PlayState:update(dt)
 
                 self.board.tiles[newTile.gridY][newTile.gridX] = newTile
 
+                -- save tiles before calculating matches
+                local tile1 = self.highlightedTile
+                local tile2 = newTile
+
                 -- tween coordinates between the two so they swap
                 Timer.tween(0.1, {
                     [self.highlightedTile] = {x = newTile.x, y = newTile.y},
@@ -168,10 +180,38 @@ function PlayState:update(dt)
                 
                 -- once the swap is finished, we can tween falling blocks as needed
                 :finish(function()
-                    self:calculateMatches()
+                    if not self.board:calculateMatches() then
+                        -- swap grid positions of tiles
+                        local tempX2 = tile1.gridX
+                        local tempY2 = tile1.gridY
+
+                        tile1.gridX = tile2.gridX
+                        tile1.gridY = tile2.gridY
+                        tile2.gridX = tempX2
+                        tile2.gridY = tempY2
+
+                        -- swap tiles in the tiles table
+                        self.board.tiles[tile1.gridY][tile1.gridX] =
+                           tile1
+
+                        self.board.tiles[tile2.gridY][tile2.gridX] = tile2
+
+                        -- tween coordinates between the two so they swap
+                        Timer.tween(0.1, {
+                            [tile1] = {x = tile2.x, y = tile2.y},
+                            [tile2] = {x = tile1.x, y = tile1.y}
+                        })
+                        self.highlightedTile = nil
+                    else
+                        self:calculateMatches()
+                    end
                 end)
             end
         end
+    end
+
+    while not self.board:checkPossibleMatches() do
+        self.board:initializeTiles()
     end
 
     Timer.update(dt)
@@ -264,3 +304,4 @@ function PlayState:render()
     love.graphics.printf('Goal : ' .. tostring(self.scoreGoal), 20, 80, 182, 'center')
     love.graphics.printf('Timer: ' .. tostring(self.timer), 20, 108, 182, 'center')
 end
+

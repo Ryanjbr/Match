@@ -32,16 +32,16 @@ function Board:initializeTiles()
         table.insert(self.tiles, {})
 
         -- create a random starting value to create a subset of colors to use in the board
-        startValue = math.random(1, 11)
+        local startValue = math.random(1, 9)
 
         for tileX = 1, 8 do
-            if math.random(100) == 1 then
+            if math.random(1,100) == 1 then
                 special = true
             end
 
             
             -- create a new tile at X,Y with a random color and variety
-            table.insert(self.tiles[tileY], Tile(tileX, tileY, math.random(startValue, startValue + 7), math.random(1, self.level % 6), special))
+            table.insert(self.tiles[tileY], Tile(tileX, tileY, math.random(startValue, startValue + 9), math.random(1, self.level % 6), special))
             special = false
         end
     end
@@ -50,8 +50,11 @@ function Board:initializeTiles()
         
         -- recursively initialize if matches were returned so we always have
         -- a matchless board on start
+
+        -- also checks that a match is possible, if not, remakes the board
         self:initializeTiles()
     end
+
 end
 
 --[[
@@ -88,7 +91,7 @@ function Board:calculateMatches()
 
                     -- go backwards from here by matchNum
                     for x2 = x - 1, x - matchNum, -1 do
-                        if self.tiles[y][x2].special then
+                        if self.tiles[y][x2].special or self.tiles[y][x].special then
                             self.tiles[y][x2].special = false
                             match = {}
                             for i=1,8 do
@@ -150,7 +153,7 @@ function Board:calculateMatches()
                     local match = {}
 
                     for y2 = y - 1, y - matchNum, -1 do
-                        if self.tiles[y2][x].special then
+                        if self.tiles[y2][x].special or self.tiles[y][x].special then
                             self.tiles[y2][x].special = false
                             match = {}
                             for i=1,8 do
@@ -181,7 +184,7 @@ function Board:calculateMatches()
             -- go backwards from end of last row by matchNum
             for y = 8, 8 - matchNum + 1, -1 do
                 if self.tiles[y][x].special then
-                    self.tiles[y][x].special = false
+                self.tiles[y][x].special = false
                     match = {}
                     for i=1,8 do
                         table.insert(match, self.tiles[i][x])
@@ -276,13 +279,17 @@ function Board:getFallingTiles()
     -- create replacement tiles at the top of the screen
     for x = 1, 8 do
         for y = 8, 1, -1 do
+            local special = false
+            if math.random(1,100) == 1 then
+                special = true
+            end
             local tile = self.tiles[y][x]
 
             -- if the tile is nil, we need to add a new one
             if not tile then
 
                 -- new tile with random color and variety
-                local tile = Tile(x, y, math.random(18), math.random(1, self.level % 6))
+                local tile = Tile(x, y, math.random(18), math.random(1, self.level % 6), special)
                 tile.y = -32
                 self.tiles[y][x] = tile
 
@@ -295,6 +302,113 @@ function Board:getFallingTiles()
     end
 
     return tweens
+end
+
+function Board:checkPossibleMatches()
+    local directions = {'up', 'down', 'left', 'right'}
+
+    local tmpTiles = {}
+    for y=1,#self.tiles do
+        tmpTiles[y] = {}
+        for x=1,#self.tiles[y] do
+            tmpTiles[y][x] = self.tiles[y][x]
+        end
+    end
+
+    function calculate()
+        local matchNum = 1
+        for x = 1, 8 do
+            local colorToMatch = tmpTiles[1][x].color
+    
+            matchNum = 1
+    
+            -- every vertical tile
+            for y = 2, 8 do
+                if tmpTiles[y][x].color == colorToMatch then
+                    matchNum = matchNum + 1
+                else
+                    colorToMatch = tmpTiles[y][x].color
+                    matchNum = 1
+                end
+    
+                if matchNum >= 3 then
+                    return true
+                end
+            end
+        end
+        for y = 1, 8 do
+            local colorToMatch = tmpTiles[y][1].color
+    
+            matchNum = 1
+    
+            -- every horizontal tile
+            for x = 2, 8 do
+                if tmpTiles[y][x].color == colorToMatch then
+                    matchNum = matchNum + 1
+                else
+                    colorToMatch = tmpTiles[y][x].color
+                    matchNum = 1
+                end
+    
+                if matchNum >= 3 then
+                    return true
+                end
+            end
+        end   
+        return false     
+    end
+
+    for x = 1,8 do
+        for y = 1,8 do
+            for k, direction in pairs(directions) do
+                if direction == 'up' and x > 1 then
+                    local tmpTile = tmpTiles[y][x]
+                    tmpTiles[y][x] = tmpTiles[y][x-1]
+                    tmpTiles[y][x-1] = tmpTile
+                    if calculate() then
+                        return true
+                    end
+                    tmpTile = tmpTiles[y][x]
+                    tmpTiles[y][x] = tmpTiles[y][x-1]
+                    tmpTiles[y][x-1] = tmpTile
+                elseif direction == 'down' and x < 8 then
+                    local tmpTile = tmpTiles[y][x]
+                    tmpTiles[y][x] = tmpTiles[y][x+1]
+                    tmpTiles[y][x+1] = tmpTile
+
+                    if calculate() then
+                        return true
+                    end
+
+                    tmpTile = tmpTiles[y][x]
+                    tmpTiles[y][x] = tmpTiles[y][x+1]
+                    tmpTiles[y][x+1] = tmpTile
+                    tmpTiles = tmpTiles
+                elseif direction == 'left' and y > 1 then
+                    local tmpTile = tmpTiles[y][x]
+                    tmpTiles[y][x] = tmpTiles[y-1][x]
+                    tmpTiles[y-1][x] = tmpTile
+                    if calculate() then
+                        return true
+                    end
+                    tmpTile = tmpTiles[y][x]
+                    tmpTiles[y][x] = tmpTiles[y-1][x]
+                    tmpTiles[y-1][x] = tmpTile 
+                elseif direction == 'right' and y < 8 then
+                    local tmpTile = tmpTiles[y][x]
+                    tmpTiles[y][x] = tmpTiles[y+1][x]
+                    tmpTiles[y+1][x] = tmpTile
+                    if calculate() then
+                        return true
+                    end
+                    tmpTile = tmpTiles[y][x]
+                    tmpTiles[y][x] = tmpTiles[y+1][x]
+                    tmpTiles[y+1][x] = tmpTile
+                end
+            end
+        end
+    end
+    return false
 end
 
 function Board:render()
